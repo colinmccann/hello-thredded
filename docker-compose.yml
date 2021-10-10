@@ -1,0 +1,49 @@
+version: "3.6"
+networks:
+  frontend:
+  backend:
+services:
+  db:
+    image: postgres:12-alpine
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: db-password
+    networks:
+      - backend
+  web:
+    build: .
+    # We want to avoid mapping Gemfile.lock, yarn.lock, etc but there is no way to exclude
+    # files using `volumes`.
+    volumes:
+    - ./.rspec:/hello-thredded-6/.rspec
+    - ./Procfile.docker.dev:/hello-thredded-6/Procfile.docker.dev
+    - ./Rakefile:/hello-thredded-6/Rakefile
+    - ./config.ru:/hello-thredded-6/config.ru
+    - ./app:/hello-thredded-6/app
+    - ./bin:/hello-thredded-6/bin
+    - ./config:/hello-thredded-6/config
+    - ./db:/hello-thredded-6/db
+    - ./lib:/hello-thredded-6/lib
+    - ./script:/hello-thredded-6/script
+    - ./vendor:/hello-thredded-6/vendor
+    - ./spec:/hello-thredded-6/spec
+    working_dir: /hello-thredded-6
+    environment:
+      DB: postgresql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: root
+      DB_PASSWORD: db-password
+      BUNDLE_GEMFILE: /hello-thredded-6/Gemfile
+      WEBPACKER_DEV_SERVER_HOST: 0.0.0.0
+    command: script/docker-dev-start-web.sh
+    networks:
+      - backend
+      - frontend
+    ports:
+      - "9292:9292"
+      - "3035:3035"
+    depends_on:
+      - db
